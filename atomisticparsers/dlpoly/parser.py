@@ -153,7 +153,7 @@ class FieldParser(TextParser):
                     dict(
                         functional_form=potentials.get(val_n[0], val_n[0]),
                         # atom index starts from 1
-                        atom_indices=[int(n) - 1 for n in val_n[1:3]],
+                        atom_indices=[[int(n) - 1 for n in val_n[1:3]]],
                         parameters=[float(v) for v in val_n[3:]],
                     )
                 )
@@ -180,7 +180,7 @@ class FieldParser(TextParser):
                 interactions.append(
                     dict(
                         functional_form=potentials.get(val_n[0], val_n[0]),
-                        atom_indices=[int(n) - 1 for n in val_n[1:4]],
+                        atom_indices=[[int(n) - 1 for n in val_n[1:4]]],
                         parameters=[float(v) for v in val_n[4:]],
                     )
                 )
@@ -202,7 +202,7 @@ class FieldParser(TextParser):
                 interactions.append(
                     dict(
                         functional_form=potentials.get(val_n[0], val_n[0]),
-                        atom_indices=[int(n) - 1 for n in val_n[1:5]],
+                        atom_indices=[[int(n) - 1 for n in val_n[1:5]]],
                         parameters=[float(v) for v in val_n[5:]],
                     )
                 )
@@ -221,7 +221,7 @@ class FieldParser(TextParser):
                 interactions.append(
                     dict(
                         functional_form=potentials.get(val_n[0], val_n[0]),
-                        atom_indices=[int(n) - 1 for n in val_n[1:5]],
+                        atom_indices=[[int(n) - 1 for n in val_n[1:5]]],
                         parameters=[float(v) for v in val_n[5:]],
                     )
                 )
@@ -235,7 +235,7 @@ class FieldParser(TextParser):
                 interactions.append(
                     dict(
                         functional_form=potentials.get(val_n[0], val_n[0]),
-                        atom_indices=[int(n) - 1 for n in val_n[1:2]],
+                        atom_indices=[[int(n) - 1 for n in val_n[1:2]]],
                         parameters=[float(v) for v in val_n[2:]],
                     )
                 )
@@ -264,7 +264,7 @@ class FieldParser(TextParser):
                 interactions.append(
                     dict(
                         functional_form=potentials.get(val_n[2], val_n[2]),
-                        atom_labels=val_n[:2],
+                        atom_labels=[val_n[:2]],
                         parameters=[float(v) for v in val_n[3:]],
                     )
                 )
@@ -284,7 +284,7 @@ class FieldParser(TextParser):
                 interactions.append(
                     dict(
                         functional_form=potentials.get(val_n[3], val_n[3]),
-                        atom_labels=val_n[:3],
+                        atom_labels=[val_n[:3]],
                         parameters=[float(v) for v in val_n[4:]],
                     )
                 )
@@ -302,7 +302,7 @@ class FieldParser(TextParser):
                 interactions.append(
                     dict(
                         functional_form=potentials.get(val_n[4], val_n[4]),
-                        atom_labels=val_n[:4],
+                        atom_labels=[val_n[:4]],
                         parameters=[float(v) for v in val_n[5:]],
                     )
                 )
@@ -321,7 +321,7 @@ class FieldParser(TextParser):
                 interactions.append(
                     dict(
                         functional_form=potentials.get(val_n[2], val_n[2]),
-                        atom_labels=val_n[:2],
+                        atom_labels=[val_n[:2]],
                         parameters=[float(v) for v in val_n[3:]],
                     )
                 )
@@ -377,7 +377,7 @@ class FieldParser(TextParser):
                             convert=False,
                             str_operation=lambda x: [
                                 dict(
-                                    atom_indices=[int(v) - 1 for v in val[:2]],
+                                    atom_indices=[[int(v) - 1 for v in val[:2]]],
                                     parameters=[float(v) for v in val[2:3]],
                                 )
                                 for val in [v.split() for v in x.strip().splitlines()]
@@ -587,7 +587,10 @@ class DLPolyParser(MDParser):
 
         def get_system_data(frame_index):
             frame = self.traj_parser.get("frame")[frame_index]
-            labels = [atom.get("label") for atom in frame.get("atoms", [])]
+            labels = [
+                atom.get("label") if atom.get("label") else "X"
+                for atom in frame.get("atoms", [])
+            ]
             lattice_vectors = frame.get("lattice_vectors") * ureg.angstrom
             array = np.transpose(
                 [atom.get("array") for atom in frame.get("atoms", [])], axes=(1, 0, 2)
@@ -646,7 +649,9 @@ class DLPolyParser(MDParser):
                     sec_interaction = Interaction()
                     sec_model.contributions.append(sec_interaction)
                     for key, val in interaction.items():
-                        setattr(sec_interaction, key, val)
+                        sec_interaction.m_set(
+                            sec_interaction.m_get_quantity_definition(key), val
+                        )
             # add constraints to initial system
             constraint_data = []
             for constraint in molecule.get("constraints", []):
@@ -659,7 +664,7 @@ class DLPolyParser(MDParser):
                 )
             # rigid atoms
             for rigid in molecule.get("rigid", []):
-                constraint_data.append(dict(kind="static atoms", atom_indices=rigid))
+                constraint_data.append(dict(kind="static atoms", atom_indices=[rigid]))
             self.parse_section(dict(constraint=constraint_data), sec_run.system[0])
         # TODO add atom groups in system
 
@@ -669,7 +674,9 @@ class DLPolyParser(MDParser):
                 sec_interaction = Interaction()
                 sec_model.contributions.append(sec_interaction)
                 for key, val in interaction.items():
-                    setattr(sec_interaction, key, val)
+                    quantity_def = sec_interaction.m_def.all_quantities.get(key)
+                    if quantity_def:
+                        sec_interaction.m_set(quantity_def, val)
 
         system_spec = self.mainfile_parser.get("system_specification", {})
         n_atoms = len(sec_run.system[-1].atoms.positions)

@@ -1452,11 +1452,10 @@ class GromacsParser(MDParser):
                 )
                 sec_fe = self.archive.workflow2.results.free_energy_calculations[0]
                 sec_fe.method_ref = sec_fe_parameters
-                if self.archive.m_context:
-                    sec_fe.value_total_energy_magnitude = columns[:, 0]
-                    sec_fe.value_total_energy_derivative_magnitude = columns[:, 1]
-                    sec_fe.value_total_energy_differences_magnitude = columns[:, 2:-1]
-                    sec_fe.value_PV_energy_magnitude = columns[:, -1]
+                sec_fe.value_total_energy_magnitude = columns[:, 0]
+                sec_fe.value_total_energy_derivative_magnitude = columns[:, 1]
+                sec_fe.value_total_energy_differences_magnitude = columns[:, 2:-1]
+                sec_fe.value_PV_energy_magnitude = columns[:, -1]
 
     def parse_input(self):
         sec_run = self.archive.run[-1]

@@ -70,6 +70,9 @@ def to_float(string):
     return value
 
 
+test_change = 1.0
+
+
 class GromacsLogParser(TextParser):
     def __init__(self):
         super().__init__(None)

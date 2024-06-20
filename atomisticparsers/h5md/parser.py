@@ -536,11 +536,20 @@ class H5MDParser(MDParser):
                 if (
                     "energ" in observable_name
                 ):  # TODO check for energies or energy when matching name
-                    if hasattr(Energy, observable_label):
-                        data["energy"][observable_label] = dict(value=val)
+                    # check for usage of energy/mole and convert to energy
+                    if val.check("[energy]/[substance]") and "mole" in str(val.units):
+                        val = val * MOL * ureg.mole
+
+                    if val.check("[energy]"):
+                        if hasattr(Energy, observable_label):
+                            data["energy"][observable_label] = dict(value=val)
+                        else:
+                            data_h5md["x_h5md_energy_contributions"].append(
+                                EnergyEntry(kind=key, value=val)
+                            )
                     else:
-                        data_h5md["x_h5md_energy_contributions"].append(
-                            EnergyEntry(kind=key, value=val)
+                        self.logger.warning(
+                            "Energy value not in energy units. Skipping entry."
                         )
                 else:
                     if hasattr(BaseCalculation, observable_label):

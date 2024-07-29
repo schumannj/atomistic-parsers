@@ -92,7 +92,7 @@ def test_md_verbose(parser):
     assert sec_sccs[3].temperature.magnitude == approx(291.80401611328125)
     assert sec_sccs[2].volume.magnitude == approx(1.505580043792725e-26)
     assert sec_sccs[2].density.magnitude == approx(1007.9478759765625)
-    assert sec_sccs[2].enthalpy.magnitude == approx(-1.184108268425108e31)
+    assert sec_sccs[2].enthalpy.magnitude == approx(-3.265048185525196e-17)
     assert sec_sccs[2].virial_tensor[2][2].magnitude == approx(1.1367756347656254e-19)
     assert len(sec_sccs[1].x_gromacs_thermodynamics_contributions) == 5
     assert sec_sccs[1].x_gromacs_thermodynamics_contributions[2].kind == "#Surf*SurfTen"
@@ -103,31 +103,31 @@ def test_md_verbose(parser):
     assert sec_sccs[-2].energy.x_gromacs_energy_contributions[1].kind == "G96Angle"
     assert sec_sccs[-2].energy.x_gromacs_energy_contributions[
         1
-    ].value.magnitude == approx(9.90594089232063e27)
-    assert sec_sccs[0].energy.total.value.magnitude == approx(-1.1863129365544755e31)
+    ].value.magnitude == approx(2.7314541413859703e-20)
+    assert sec_sccs[0].energy.total.value.magnitude == approx(-3.2711273151685104e-17)
     assert sec_sccs[0].energy.electrostatic.value.magnitude == approx(
-        -1.6677869795296e31
+        -4.598738980683062e-17
     )
     assert sec_sccs[0].energy.electrostatic.short_range.magnitude == approx(
-        -1.5069901728906464e31
+        -4.155359489335505e-17
     )
     assert sec_sccs[0].energy.electrostatic.long_range.magnitude == approx(
-        -1.6079680663895344e30
+        -4.4337949134755685e-18
     )
     assert sec_sccs[-1].energy.van_der_waals.value.magnitude == approx(
-        2.5995702480888255e30
+        7.168028758853762e-18
     )
     assert sec_sccs[-1].energy.van_der_waals.short_range.magnitude == approx(
-        2.675488981642447e30
+        7.37736630833841e-18
     )
     assert sec_sccs[-1].energy.van_der_waals.long_range.magnitude == approx(
-        -4.4191382265877185e28
+        -1.2185287133832595e-19
     )
     assert sec_sccs[-1].energy.van_der_waals.correction.magnitude == approx(
-        -3.172735128774431e28
+        -8.74846781463227e-20
     )
     assert sec_sccs[0].energy.pressure_volume_work.value.magnitude == approx(
-        5.46058641332406e26
+        1.5056965850293703e-21
     )
 
     assert sec_sccs[0].forces.total.value[5][2].magnitude == approx(
@@ -321,7 +321,7 @@ def test_geometry_optimization(parser):
     assert sec_workflow.results.optimization_steps == 12
     assert sec_workflow.method.optimization_steps_maximum == 5000
     assert len(sec_workflow.results.energies) == 11
-    assert sec_workflow.results.energies[2].magnitude == approx(2.9900472759121395e31)
+    assert sec_workflow.results.energies[2].magnitude == approx(8.244726173423347e-17)
     assert sec_workflow.results.energies[2].units == "joule"
     assert len(sec_workflow.results.steps) == 11
     assert sec_workflow.results.steps[4] == 5000

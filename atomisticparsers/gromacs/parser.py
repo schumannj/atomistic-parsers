@@ -634,7 +634,7 @@ class GromacsParser(MDParser):
         self.mdp_std_filename = "mdout"
         self.xvg_parser = GromacsXvgParser()
         self.input_parameters = {}
-        self._gro_energy_units = ureg.kilojoule * MOL
+        self._gro_energy_units = ureg.kilojoule / MOL
         self._thermo_ignore_list = ["Time", "Box-X", "Box-Y", "Box-Z"]
         self._base_calc_map = {
             "Temperature": ("temperature", ureg.kelvin),

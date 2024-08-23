@@ -68,6 +68,8 @@ amber_parser_entry_point = EntryPoint(
     },
 =======
     description='NOMAD parser for AMBER.',
+    python_package='atomisticparsers.amber',
+    mainfile_contents_re=r'\s*Amber\s[0-9]+\s[A-Z]+\s*[0-9]+',
     parser_class_name='atomisticparsers.amber.AmberParser',
 >>>>>>> e9b52a2 (Add entry point)
 )
@@ -100,6 +102,10 @@ asap_parser_entry_point = EntryPoint(
     },
 =======
     description='NOMAD parser for ASAP.',
+    python_package='atomisticparsers.asap',
+    mainfile_binary_header_re=b'AFFormatASE\\-Trajectory',
+    mainfile_mime_re='application/octet-stream',
+    mainfile_name_re=r'.*.traj$',
     parser_class_name='atomisticparsers.asap.AsapParser',
 >>>>>>> e9b52a2 (Add entry point)
 )
@@ -130,6 +136,8 @@ bopfox_parser_entry_point = EntryPoint(
     },
 =======
     description='NOMAD parser for BOPFOX.',
+    python_package='atomisticparsers.bopfox',
+    mainfile_contents_re=r'\-+\s+BOPfox \(v',
     parser_class_name='atomisticparsers.bopfox.BOPfoxParser',
 >>>>>>> e9b52a2 (Add entry point)
 )
@@ -186,12 +194,17 @@ dlpoly_parser_entry_point = EntryPoint(
     },
 =======
     description='NOMAD parser for DFTBPLUS.',
+    python_package='atomisticparsers.dftbplus',
+    mainfile_contents_re=r'\|  DFTB\+',
+    mainfile_mime_re='text/.*',
     parser_class_name='atomisticparsers.dftbplus.DFTBPlusParser',
 )
 
 dlpoly_parser_entry_point = EntryPoint(
     name='parsers/dlpoly',
     description='NOMAD parser for DLPOLY.',
+    python_package='atomisticparsers.dlpoly',
+    mainfile_contents_re=r'\*\*\s+DL_POLY.+\*\*',
     parser_class_name='atomisticparsers.dlpoly.DLPolyParser',
 >>>>>>> e9b52a2 (Add entry point)
 )
@@ -222,6 +235,8 @@ gromacs_parser_entry_point = EntryPoint(
     },
 =======
     description='NOMAD parser for GROMACS.',
+    python_package='atomisticparsers.gromacs',
+    mainfile_contents_re=r'gmx mdrun, (VERSION|version)[\s\S]*Input Parameters:',
     parser_class_name='atomisticparsers.gromacs.GromacsParser',
 >>>>>>> e9b52a2 (Add entry point)
 )
@@ -252,6 +267,8 @@ gromos_parser_entry_point = EntryPoint(
     },
 =======
     description='NOMAD parser for GROMOS.',
+    python_package='atomisticparsers.gromos',
+    mainfile_contents_re=r'Bugreports to http://www.gromos.net',
     parser_class_name='atomisticparsers.gromos.GromosParser',
 >>>>>>> e9b52a2 (Add entry point)
 )
@@ -285,6 +302,9 @@ gulp_parser_entry_point = EntryPoint(
     },
 =======
     description='NOMAD parser for GULP.',
+    python_package='atomisticparsers.gulp',
+    mainfile_contents_re=(r'\s*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\s*\s*\*\s*GENERAL UTILITY '
+        r'LATTICE PROGRAM\s*\*\s*'),
     parser_class_name='atomisticparsers.gulp.GulpParser',
 >>>>>>> e9b52a2 (Add entry point)
 )
@@ -316,6 +336,11 @@ h5md_parser_entry_point = EntryPoint(
     },
 =======
     description='NOMAD parser for H5MD.',
+    python_package='atomisticparsers.h5md',
+    mainfile_binary_header_re=b'^\\x89HDF',
+    mainfile_contents_dict={'__has_all_keys': ['h5md']},
+    mainfile_mime_re='(application/x-hdf)',
+    mainfile_name_re=r'^.*\.(h5|hdf5)$',
     parser_class_name='atomisticparsers.h5md.H5MDParser',
 >>>>>>> e9b52a2 (Add entry point)
 )
@@ -370,12 +395,16 @@ libatoms_parser_entry_point = EntryPoint(
     },
 =======
     description='NOMAD parser for LAMMPS.',
+    python_package='atomisticparsers.lammps',
+    mainfile_contents_re=r'^LAMMPS\s+\(.+\)',
     parser_class_name='atomisticparsers.lammps.LammpsParser',
 )
 
 libatoms_parser_entry_point = EntryPoint(
     name='parsers/libatoms',
     description='NOMAD parser for LIBATOMS.',
+    python_package='atomisticparsers.libatoms',
+    mainfile_contents_re=r'\s*<GAP_params\s',
     parser_class_name='atomisticparsers.libatoms.LibAtomsParser',
 >>>>>>> e9b52a2 (Add entry point)
 )
@@ -407,6 +436,9 @@ namd_parser_entry_point = EntryPoint(
     },
 =======
     description='NOMAD parser for NAMD.',
+    python_package='atomisticparsers.namd',
+    mainfile_contents_re=r'\s*Info:\s*NAMD\s*[0-9.]+\s*for\s*',
+    mainfile_mime_re='text/.*',
     parser_class_name='atomisticparsers.namd.NAMDParser',
 >>>>>>> e9b52a2 (Add entry point)
 )
@@ -437,6 +469,8 @@ tinker_parser_entry_point = EntryPoint(
     },
 =======
     description='NOMAD parser for TINKER.',
+    python_package='atomisticparsers.tinker',
+    mainfile_contents_re=r'TINKER  ---  Software Tools for Molecular Design',
     parser_class_name='atomisticparsers.tinker.TinkerParser',
 >>>>>>> e9b52a2 (Add entry point)
 )
@@ -467,6 +501,8 @@ xtb_parser_entry_point = EntryPoint(
     },
 =======
     description='NOMAD parser for XTB.',
+    python_package='atomisticparsers.xtb',
+    mainfile_contents_re=r'x T B\s+\|\s+\|\s+=',
     parser_class_name='atomisticparsers.xtb.XTBParser',
 >>>>>>> e9b52a2 (Add entry point)
 )

@@ -84,6 +84,7 @@ class GromacsLogParser(TextParser):
             re_scalar = re.compile(r"\s*([\w\-]+)\s*[=:]\s*(.+)")
             parameters = dict()
             val = val_in.strip().splitlines()
+            print(val)
             for val_n in val:
                 val_scalar = re_scalar.match(val_n)
                 if val_scalar:
@@ -98,6 +99,7 @@ class GromacsLogParser(TextParser):
                     parameters[val_array.group(1)].append(
                         value[0] if len(value) == 1 else value
                     )
+            print(parameters)
             return parameters
 
         def str_to_energies(val_in):

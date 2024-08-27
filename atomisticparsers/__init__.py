@@ -40,7 +40,7 @@ class EntryPoint(ParserEntryPoint):
     def load(self):
         from nomad.parsing import MatchingParserInterface
 
-        return MatchingParserInterface(**self.dict())
+        return MatchingParserInterface(self.parser_class_name, **self.dict())
 
 
 amber_parser_entry_point = EntryPoint(

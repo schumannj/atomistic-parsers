@@ -741,7 +741,7 @@ def test_free_energy_calculations(parser):
         },
     ],
 )
-def test_str_to_input_parameters(result: Dict[Any]):
+def test_str_to_input_parameters(result: Dict[str, Any]):
     """_summary_
 
     Args:

@@ -20,9 +20,15 @@ import pytest
 import numpy as np
 import h5py
 
+from typing import (
+    Any,
+    Dict,
+)
+
 from nomad.datamodel import EntryArchive
 from atomisticparsers.gromacs import GromacsParser
 from simulationworkflowschema.molecular_dynamics import FreeEnergyCalculationParameters
+from atomisticparsers.gromacs import GromacsLogParser
 
 
 def approx(value, abs=0, rel=1e-6):
@@ -502,3 +508,268 @@ def test_free_energy_calculations(parser):
     assert sec_results.value_unit == 'kilojoule'
     # assert isinstance(sec_results.method_ref, FreeEnergyCalculationParameters)
     # TODO add testing of hdf5 references in sec_results ('value_total_energy_magnitude', 'value_total_energy_derivative_magnitude', 'value_total_energy_differences_magnitude', 'value_PV_energy_magnitude') to NOMAD testing
+
+
+@pytest.mark.parametrize(
+    "result",
+    [
+        {
+            "integrator": "sd",
+            "tinit": 0,
+            "dt": 0.02,
+            "nsteps": 5000,
+            "init-step": 0,
+            "simulation-part": 1,
+            "mts": False,
+            "comm-mode": "Linear",
+            "nstcomm": 10,
+            "bd-fric": 0,
+            "ld-seed": "-1644956181",
+            "emtol": 10,
+            "emstep": 0.01,
+            "niter": 20,
+            "fcstep": 0,
+            "nstcgsteep": 1000,
+            "nbfgscorr": 10,
+            "rtpi": 0.05,
+            "nstxout": 0,
+            "nstvout": 0,
+            "nstfout": 0,
+            "nstlog": 10000,
+            "nstcalcenergy": 10,
+            "nstenergy": 10000,
+            "nstxout-compressed": 10000,
+            "compressed-x-precision": 1000,
+            "cutoff-scheme": "Verlet",
+            "nstlist": 20,
+            "pbc": "xyz",
+            "periodic-molecules": False,
+            "verlet-buffer-tolerance": 0.005,
+            "rlist": 1.206,
+            "coulombtype": "Reaction-Field",
+            "coulomb-modifier": "Potential-shift",
+            "rcoulomb-switch": 0,
+            "rcoulomb": 1.1,
+            "epsilon-r": 15,
+            "epsilon-rf": "inf",
+            "vdw-type": "Cut-off",
+            "vdw-modifier": "Potential-shift",
+            "rvdw-switch": 0,
+            "rvdw": 1.1,
+            "DispCorr": "No",
+            "table-extension": 1,
+            "fourierspacing": 0.12,
+            "fourier-nx": 0,
+            "fourier-ny": 0,
+            "fourier-nz": 0,
+            "pme-order": 4,
+            "ewald-rtol": "1e-05",
+            "ewald-rtol-lj": 0.001,
+            "lj-pme-comb-rule": "Geometric",
+            "ewald-geometry": "3d",
+            "epsilon-surface": 0,
+            "ensemble-temperature-setting": "constant",
+            "ensemble-temperature": 300,
+            "tcoupl": "No",
+            "nsttcouple": "-1",
+            "nh-chain-length": 0,
+            "print-nose-hoover-chain-variables": False,
+            "pcoupl": "Parrinello-Rahman",
+            "pcoupltype": "Isotropic",
+            "nstpcouple": 10,
+            "tau-p": 4,
+            "compressibility": [
+                [4.5e-05, 0.0, 0.0],
+                [0.0, 4.5e-05, 0.0],
+                [0.0, 0.0, 4.5e-05],
+            ],
+            "ref-p": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+            "refcoord-scaling": "No",
+            "posres-com": [0.0, 0.0, 0.0],
+            "posres-comB": [0.0, 0.0, 0.0],
+            "QMMM": False,
+            "qm-opts": {
+                "ngQM": 0,
+                "constraint-algorithm": "Lincs",
+                "continuation": False,
+                "Shake-SOR": False,
+                "shake-tol": 0.0001,
+                "lincs-order": 4,
+                "lincs-iter": 1,
+                "lincs-warnangle": 30,
+                "nwall": 0,
+                "wall-type": "9-3",
+                "wall-r-linpot": "-1",
+                "wall-atomtype": [-1.0, -1.0],
+                "wall-density": [0.0, 0.0],
+                "wall-ewald-zfac": 3,
+                "pull": True,
+                "pull-cylinder-r": 1.5,
+                "pull-constr-tol": "1e-06",
+                "pull-print-COM": False,
+                "pull-print-ref-value": False,
+                "pull-print-components": False,
+                "pull-nstxout": 100,
+                "pull-nstfout": 100,
+                "pull-pbc-ref-prev-step-com": True,
+                "pull-xout-average": False,
+                "pull-fout-average": False,
+                "pull-ngroups": 3,
+                "pull-group 0": {
+                    "atom": "not available",
+                    "weight": "not available",
+                    "pbcatom": "-1",
+                },
+                "pull-group 1": {
+                    "atom": [
+                        0,
+                        1,
+                        2,
+                        3,
+                        4,
+                        5,
+                        6,
+                        7,
+                        8,
+                        9,
+                        10,
+                        11,
+                        12,
+                        13,
+                        14,
+                        15,
+                        16,
+                        17,
+                        18,
+                        19,
+                        20,
+                        21,
+                        22,
+                        23,
+                        24,
+                        25,
+                        26,
+                        27,
+                        28,
+                        29,
+                        30,
+                        31,
+                        32,
+                        33,
+                        34,
+                    ],
+                    "weight": "not available",
+                    "pbcatom": 1280,
+                },
+                "pull-group 2": {
+                    "atom": [7370.0],
+                    "weight": "not available",
+                    "pbcatom": "-1",
+                },
+                "pull-ncoords": 1,
+                "pull-coord 0": {},
+                "type": "umbrella",
+                "geometry": "distance",
+                "group": [1.0, 2.0],
+                "dim": [0.0, 0.0, 1.0],
+                "origin": [0.0, 0.0, 0.0],
+                "vec": [0.0, 0.0, 0.0],
+                "start": False,
+                "init": 1.9,
+                "rate": 0,
+                "k": 1000,
+                "kB": 1000,
+                "awh": False,
+                "rotation": False,
+                "interactiveMD": False,
+                "disre": "No",
+                "disre-weighting": "Conservative",
+                "disre-mixed": False,
+                "dr-fc": 1000,
+                "dr-tau": 0,
+                "nstdisreout": 100,
+                "orire-fc": 0,
+                "orire-tau": 0,
+                "nstorireout": 100,
+                "free-energy": "no",
+                "cos-acceleration": 0,
+                "deform": [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
+                "simulated-tempering": False,
+                "swapcoords": "no",
+                "userint1": 0,
+                "userint2": 0,
+                "userint3": 0,
+                "userint4": 0,
+                "userreal1": 0,
+                "userreal2": 0,
+                "userreal3": 0,
+                "userreal4": 0,
+                "applied-forces": {
+                    "electric-field": {
+                        "x": {"E0": 0, "omega": 0, "t0": 0, "sigma": 0},
+                        "y": {"E0": 0, "omega": 0, "t0": 0, "sigma": 0},
+                        "z": {"E0": 0, "omega": 0, "t0": 0, "sigma": 0},
+                    },
+                    "density-guided-simulation": {
+                        "active": False,
+                        "group": "protein",
+                        "similarity-measure": "inner-product",
+                        "atom-spreading-weight": "unity",
+                        "force-constant": "1e+09",
+                        "gaussian-transform-spreading-width": 0.2,
+                        "gaussian-transform-spreading-range-in-multiples-of-width": 4,
+                        "reference-density-filename": "reference.mrc",
+                        "nst": 1,
+                        "normalize-densities": True,
+                        "adaptive-force-scaling": False,
+                        "adaptive-force-scaling-time-constant": 4,
+                    },
+                    "qmmm-cp2k": {
+                        "active": False,
+                        "qmgroup": "System",
+                        "qmmethod": "PBE",
+                        "qmcharge": 0,
+                        "qmmultiplicity": 1,
+                    },
+                },
+            },
+            "grpopts": {"nrdf": 22110, "ref-t": 300, "tau-t": 1},
+            "annealing": "No",
+            "annealing-npoints": 0,
+            "acc": "0           0           0",
+            "nfreeze": "N           N           N",
+        },
+    ],
+)
+def test_str_to_input_parameters(result: Dict[Any]):
+    """_summary_
+
+    Args:
+        input (str): _description_
+        result (Dict[Any]): _description_
+    """
+
+    def assert_dict_equal(d1, d2):
+        """
+        Recursively assert that two dictionaries are equal.
+
+        Args:
+            d1 (dict): First dictionary to compare.
+            d2 (dict): Second dictionary to compare.
+        """
+        assert isinstance(d1, dict), f"Expected dict, got {type(d1)}"
+        assert isinstance(d2, dict), f"Expected dict, got {type(d2)}"
+        assert d1.keys() == d2.keys(), f"Keys mismatch: {d1.keys()} != {d2.keys()}"
+
+        for key in d1:
+            if isinstance(d1[key], dict) and isinstance(d2[key], dict):
+                assert_dict_equal(d1[key], d2[key])
+            else:
+                assert (
+                    d1[key] == d2[key]
+                ), f"Value mismatch for key '{key}': {d1[key]} != {d2[key]}"
+
+    log_parser = GromacsLogParser()
+    log_parser.mainfile = "tests/data/gromacs/input_parameters/test.log"
+    parsed_parameters = log_parser.get("input_parameters")
+    assert_dict_equal(parsed_parameters, result)

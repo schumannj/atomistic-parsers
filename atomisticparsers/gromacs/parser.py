@@ -63,6 +63,8 @@ MOL = 6.022140857e23
 
 
 def to_float(string):
+    if string is None:
+        return None
     try:
         value = float(string)
     except ValueError:
@@ -80,26 +82,84 @@ class GromacsLogParser(TextParser):
             return {v[0].strip(): v[1].strip() for v in val if len(v) == 2}
 
         def str_to_input_parameters(val_in):
-            re_array = re.compile(r"\s*([\w\-]+)\[[\d ]+\]\s*=\s*\{*(.+)")
+            re_section = re.compile(r"^\s*([\w\-]+):\s*$")
+            re_subsection = re.compile(r"^\s*([\w\-]+\s[\d]+):\s*$")
             re_scalar = re.compile(r"\s*([\w\-]+)\s*[=:]\s*(.+)")
+            re_array = re.compile(r"\s*([\w\-]+)\[[\d ]+\]\s*=\s*\{*(.+)")
+            re_shorthand_array = re.compile(
+                r"\s*([\w\-]+)\[\d+,\.\.\.,\d+\]\s*=\s*\{(\d+),\.\.\.,(\d+)\}"
+            )
+
             parameters = dict()
-            val = val_in.strip().splitlines()
-            print(val)
-            for val_n in val:
+            stack = [parameters]  # Stack to track the current context
+            indent_levels = []  # To track the indentation levels
+
+            for val_n in val_in.strip().splitlines():
+                val_n = val_n.rstrip()  # Remove trailing spaces
+                if not val_n:
+                    continue
+
+                current_indent = len(val_n) - len(
+                    val_n.lstrip()
+                )  # Calculate the indentation level
+
+                # Handle end of section based on indentation
+                while indent_levels and current_indent <= indent_levels[-1]:
+                    stack.pop()
+                    indent_levels.pop()
+
+                # Check for section
+                section_match = re_section.match(val_n)
+                if section_match:
+                    section_name = section_match.group(1)
+                    stack[-1][section_name] = {}
+                    stack.append(stack[-1][section_name])
+                    indent_levels.append(current_indent)
+                    continue
+
+                # Check for subsection
+                subsection_match = re_subsection.match(val_n)
+                if subsection_match:
+                    subsection_name = subsection_match.group(1)
+                    stack[-1][subsection_name] = {}
+                    stack.append(stack[-1][subsection_name])
+                    indent_levels.append(current_indent)
+                    continue
+
+                # Check for scalar
                 val_scalar = re_scalar.match(val_n)
                 if val_scalar:
-                    parameters[val_scalar.group(1)] = val_scalar.group(2)
+                    key = val_scalar.group(1)
+                    value = val_scalar.group(2)
+                    if value.lower() == "true":
+                        value = True
+                    elif value.lower() == "false":
+                        value = False
+                    elif value.replace(".", "", 1).isdigit():
+                        value = float(value) if "." in value else int(value)
+                    stack[-1][key] = value
                     continue
+
+                # Check for shorthand array
+                val_shorthand_array = re_shorthand_array.match(val_n)
+                if val_shorthand_array:
+                    array_key = val_shorthand_array.group(1)
+                    start = int(val_shorthand_array.group(2))
+                    end = int(val_shorthand_array.group(3))
+                    stack[-1][array_key] = list(range(start, end + 1))
+                    continue
+
+                # Check for array
                 val_array = re_array.match(val_n)
                 if val_array:
-                    parameters.setdefault(val_array.group(1), [])
+                    array_key = val_array.group(1)
                     value = [
                         float(v) for v in val_array.group(2).rstrip("}").split(",")
                     ]
-                    parameters[val_array.group(1)].append(
-                        value[0] if len(value) == 1 else value
-                    )
-            print(parameters)
+                    stack[-1].setdefault(array_key, [])
+                    stack[-1][array_key].append(value[0] if len(value) == 1 else value)
+                    continue
+
             return parameters
 
         def str_to_energies(val_in):

@@ -27,6 +27,7 @@ from nomad.metainfo import (  # pylint: disable=unused-import
     Section,
     SubSection,
     SectionProxy,
+    JSON,
 )
 import runschema.run  # pylint: disable=unused-import
 import runschema.calculation  # pylint: disable=unused-import
@@ -159,6 +160,13 @@ class x_gromacs_section_control_parameters(MSection):
 
     m_def = Section(
         validate=False,
+    )
+
+    x_gromacs_all_input_parameters = Quantity(
+        type=JSON,
+        description="""
+        All input parameters read from the log and mdp files.
+        """,
     )
 
     x_gromacs_inout_control_gromacs_version = Quantity(

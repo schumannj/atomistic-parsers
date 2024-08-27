@@ -1258,6 +1258,7 @@ class GromacsParser(MDParser):
             )
         return barostat_parameters
 
+    # TODO update for new hierarchical input parameters structure
     def get_free_energy_calculation_parameters(self):
         free_energy_parameters = {}
         free_energy = self.input_parameters.get("free-energy", "")
@@ -1539,19 +1540,11 @@ class GromacsParser(MDParser):
         sec_control_parameters = x_gromacs_section_control_parameters()
         sec_run.x_gromacs_section_control_parameters = sec_control_parameters
         input_parameters = self.input_parameters
-        input_parameters.update(self.info.get("header", {}))
-        for key, val in input_parameters.items():
-            key = (
-                "x_gromacs_inout_control_%s"
-                % key.replace("-", "").replace(" ", "_").lower()
-            )
-            quantity_def = sec_control_parameters.m_def.all_quantities.get(key)
-            if quantity_def:
-                try:
-                    val = str(val) if not isinstance(val, np.ndarray) else val
-                    sec_control_parameters.m_set(quantity_def, val)
-                except Exception:
-                    self.logger.error("Error setting metainfo.", data={"key": key})
+        # input_parameters.update(self.info.get("header", {})) # ? Is there an example where this does something?
+        quantity_def = sec_control_parameters.m_def.all_quantities.get(
+            "x_gromacs_all_input_parameters"
+        )
+        sec_control_parameters.m_set(quantity_def, input_parameters)
 
     def write_to_archive(self):
         self._maindir = os.path.dirname(self.mainfile)

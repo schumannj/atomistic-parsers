@@ -36,7 +36,7 @@
   "rcoulomb-switch": 0,
   "rcoulomb": 1.1,
   "epsilon-r": 15,
-  "epsilon-rf": null,
+  "epsilon-rf": "inf",
   "vdw-type": "cut-off",
   "vdw-modifier": "potential-shift",
   "rvdw-switch": 0,

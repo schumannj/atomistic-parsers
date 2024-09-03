@@ -546,9 +546,6 @@ def test_str_to_input_parameters(path: str, input_log_fnm: str, result_json_fnm:
         assert d1.keys() == d2.keys(), f'Keys mismatch: {d1.keys()} != {d2.keys()}'
 
         for key in d1:
-            if key == 'epsilon-rf':  # TODO remove this once the inf issue is resolved
-                continue
-
             if isinstance(d1[key], dict) and isinstance(d2[key], dict):
                 assert_dict_equal(d1[key], d2[key])
             else:
@@ -560,6 +557,8 @@ def test_str_to_input_parameters(path: str, input_log_fnm: str, result_json_fnm:
                     assert np.isclose(
                         d1[key], d2[key]
                     ).all(), f"Value mismatch for key '{key}': {d1[key]} != {d2[key]}"
+                elif abs(d1[key]) == float('inf'):
+                    assert 'inf' == d2[key] if d1[key] > 0 else '-inf' == d2[key]
                 else:
                     assert d1[key] == approx(
                         d2[key]

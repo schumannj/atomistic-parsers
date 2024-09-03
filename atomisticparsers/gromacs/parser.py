@@ -1565,7 +1565,31 @@ class GromacsParser(MDParser):
         #             sec_fe.value_total_energy_differences_magnitude = columns[:, 2:-1]
         #             sec_fe.value_PV_energy_magnitude = columns[:, -1]
 
-    def check_input_parameters_dict_recursive(self, input_dict, key):
+    def standardize_input_parameters_dict_recursive(self, input_dict: dict):
+        """_summary_
+
+        Args:
+            input_dict (dict): _description_
+        """
+        for key, val in input_dict.items():
+            if isinstance(val, dict):
+                self.standardize_input_parameters_dict_recursive(val)
+            elif isinstance(val, str):
+                input_dict[key.replace('_', '-')] = val.lower()
+            elif isinstance(val, float):
+                if abs(val) == np.inf:
+                    input_dict[key] = 'inf' if val > 0 else '-inf'
+
+    def check_input_parameters_dict_recursive(self, input_dict: dict, key: str):
+        """_summary_
+
+        Args:
+            input_dict (dict): _description_
+            key (str): _description_
+
+        Returns:
+            _type_: _description_
+        """
         if key in input_dict:
             return True
         for _, v in input_dict.items():
@@ -1639,10 +1663,12 @@ class GromacsParser(MDParser):
             sec_run.x_gromacs_number_of_tasks = host_info[2]
 
         # parse the input parameters using log file's hierarchical structure as default
-        self.input_parameters = {
-            key.replace('_', '-'): val.lower() if isinstance(val, str) else val
-            for key, val in self.log_parser.get('input_parameters', {}).items()
-        }
+        # self.input_parameters = {
+        #     key.replace('_', '-'): val.lower() if isinstance(val, str) else val
+        #     for key, val in self.log_parser.get('input_parameters', {}).items()
+        # }
+        self.input_parameters = self.log_parser.get('input_parameters', {})
+        self.standardize_input_parameters_dict_recursive(self.input_parameters)
 
         # read the mdp output or input to supplement the log inputs (i.e., only store if not found in log)
         self.mdp_parser.mainfile = self.get_mdp_file()

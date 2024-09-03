@@ -391,6 +391,8 @@ class GromacsMDAnalysisParser(MDAnalysisParser):
         # read force field parameters not saved by MDAnalysis
         # copied from MDAnalysis.topology.tpr.utils
         # TODO maybe a better implementation exists
+        # ? Can we check only the primary digit? Perhaps this should be done elsewhere
+        # TODO Revamp interactions section to only extract meaningful info
         if MDAnalysis.__version__ != '2.0.0':
             self.logger.warning('Incompatible version of MDAnalysis.')
 
@@ -807,7 +809,7 @@ class GromacsParser(MDParser):
 
         n_frames = self.traj_parser.get('n_frames')
 
-        # # TODO read also from ene
+        # TODO read also from ene
         edr_file = self.get_gromacs_file('edr')
         self.energy_parser.mainfile = edr_file
 
@@ -1191,14 +1193,18 @@ class GromacsParser(MDParser):
         if 'sd' in integrator:
             thermostat_parameters['thermostat_type'] = 'langevin_goga'
         if thermostat_parameters['thermostat_type']:
-            reference_temperature = self.input_parameters.get('ref-t', None)
+            reference_temperature = self.input_parameters.get('grpopts', '').get(
+                'ref-t', None
+            )
             if isinstance(reference_temperature, str):
                 reference_temperature = to_float(
                     reference_temperature.split()[0]
                 )  # ! simulated annealing protocols not supported
             reference_temperature *= ureg.kelvin if reference_temperature else None
             thermostat_parameters['reference_temperature'] = reference_temperature
-            coupling_constant = self.input_parameters.get('tau-t', None)
+            coupling_constant = self.input_parameters.get('grpopts', '').get(
+                'tau-t', None
+            )
             if isinstance(coupling_constant, str):
                 coupling_constant = to_float(
                     coupling_constant.split()[0]
@@ -1258,19 +1264,23 @@ class GromacsParser(MDParser):
             )
         return barostat_parameters
 
-    # TODO update for new hierarchical input parameters structure
     def get_free_energy_calculation_parameters(self):
         free_energy_parameters = {}
-        free_energy = self.input_parameters.get('free-energy', '')
+
+        free_energy = self.input_parameters.get('qm-opts', '').get('free-energy', '')
         free_energy = free_energy.lower() if free_energy else ''
-        expanded = self.input_parameters.get('expanded', '')
+        expanded = self.input_parameters.get('qm-opts', '').get('expanded', '')
         expanded = expanded.lower() if expanded else ''
-        delta_lambda = int(self.input_parameters.get('delta-lamda', -1))
+        delta_lambda = int(
+            self.input_parameters.get('qm-opts', '').get('delta-lamda', -1)
+        )
         if free_energy == 'yes' and expanded == 'yes':
             self.logger.warning(
                 'storage of expanded ensemble simulation data not supported, skipping storage of free energy calculation parameters'
             )
-        elif free_energy == 'yes' and delta_lambda == 'no':
+        elif (
+            free_energy == 'yes' and delta_lambda == 'no'
+        ):  # TODO double check delta_lambda == no, may have changed for 2024.1
             self.logger.warning(
                 'Only fixed state free energy calculation calculations are explicitly supported, skipping storage of free energy calculation parameters.'
             )
@@ -1285,25 +1295,46 @@ class GromacsParser(MDParser):
                 'mass': 'mass',
                 'temperature': 'temperature',
             }
+
+            # getting lambdas from the mdp
+            # lambdas = {
+            #     key: self.input_parameters.get(f'{key}-lambdas', '')
+            #     for key in lambda_key_map.keys()
+            # }
+            # lambdas = {
+            #     key: [to_float(i) for i in val.split()] for key, val in lambdas.items()
+            # }
+            # getting lambdas from the log
+            lambdas = self.input_parameters.get('all-lambdas', {})
+            # ! unsure if the below placement of temperature-lambdas in the dict will always be exactly the same
+            # TODO fix temperature-lambdas from being overwritten due to lack of indenting
+            lambdas['temperature'] = self.input_parameters.get(
+                'temperature-lambdas', None
+            )
             lambdas = {
-                key: self.input_parameters.get(f'{key}-lambdas', '')
-                for key in lambda_key_map.keys()
+                key.split('-')[0]: [to_float(i) for i in val.split()]
+                for key, val in lambdas.items()
+                if val is not None
             }
-            lambdas = {
-                key: [to_float(i) for i in val.split()] for key, val in lambdas.items()
-            }
+
             free_energy_parameters['lambdas'] = [
                 {'type': nomad_key, 'value': lambdas[gromacs_key]}
                 for gromacs_key, nomad_key in lambda_key_map.items()
                 if lambdas[gromacs_key]
             ]
             free_energy_parameters['lambda_index'] = self.input_parameters.get(
-                'init-lambda-state', ''
-            )
+                'qm-opts', None
+            ).get('init-lambda-state', None)
 
+            #! Some free energy info seems to be missing from log and is difficult to extract.
+            #! Using the mdp file directly.
             atoms_info = self.traj_parser._results['atoms_info']
             atoms_moltypes = np.array(atoms_info['moltypes'])
-            couple_moltype = self.input_parameters.get('couple-moltype', '').split()
+            couple_moltype = (
+                self.input_parameters.get('mdp_unique_params', '')
+                .get('couple-moltype', '')
+                .split()
+            )
             n_atoms = len(atoms_moltypes)
             indices = []
             if len(couple_moltype) == 1 and couple_moltype[0].lower() == 'system':
@@ -1326,8 +1357,16 @@ class GromacsParser(MDParser):
                 'q': True,
                 'none': False,
             }
-            couple_initial = self.input_parameters.get('couple-lambda0', 'none').lower()
-            couple_final = self.input_parameters.get('couple-lambda1', 'vdw-q').lower()
+            couple_initial = (
+                self.input_parameters.get('mdp_unique_params', '')
+                .get('couple-lambda0', 'none')
+                .lower()
+            )
+            couple_final = (
+                self.input_parameters.get('mdp_unique_params', '')
+                .get('couple-lambda1', 'vdw-q')
+                .lower()
+            )
 
             free_energy_parameters['initial_state_vdw'] = couple_vdw_map[couple_initial]
             free_energy_parameters['final_state_vdw'] = couple_vdw_map[couple_final]
@@ -1338,9 +1377,11 @@ class GromacsParser(MDParser):
                 couple_final
             ]
 
-            couple_intramolecular = self.input_parameters.get(
-                'couple-intramol', 'on'
-            ).lower()
+            couple_intramolecular = (
+                self.input_parameters.get('mdp_unique_params', '')
+                .get('couple-intramol', 'on')
+                .lower()
+            )
             free_energy_parameters['final_state_bonded'] = True
             free_energy_parameters['initial_state_bonded'] = (
                 couple_intramolecular != 'yes'
@@ -1509,16 +1550,26 @@ class GromacsParser(MDParser):
 
             self.parse_md_workflow(dict(method=method, results=results))
 
-            if flag_fe and self.archive.m_context:
-                sec_fe_parameters = (
-                    self.archive.workflow2.method.free_energy_calculation_parameters[0]
-                )
-                sec_fe = self.archive.workflow2.results.free_energy_calculations[0]
-                sec_fe.method_ref = sec_fe_parameters
-                sec_fe.value_total_energy_magnitude = columns[:, 0]
-                sec_fe.value_total_energy_derivative_magnitude = columns[:, 1]
-                sec_fe.value_total_energy_differences_magnitude = columns[:, 2:-1]
-                sec_fe.value_PV_energy_magnitude = columns[:, -1]
+            # TODO fix hdf5 datasets here and then implement testing
+        #         if flag_fe and self.archive.m_context:
+        #             sec_fe_parameters = (
+        #                 self.archive.workflow2.method.free_energy_calculation_parameters[0]
+        #             )
+        #             sec_fe = self.archive.workflow2.results.free_energy_calculations[0]
+        #             sec_fe.method_ref = sec_fe_parameters
+        #             sec_fe.value_total_energy_magnitude = columns[:, 0]
+        #             sec_fe.value_total_energy_derivative_magnitude = columns[:, 1]
+        #             sec_fe.value_total_energy_differences_magnitude = columns[:, 2:-1]
+        #             sec_fe.value_PV_energy_magnitude = columns[:, -1]
+
+        # def check_input_parameters_dict_recursive(self, input_dict, key):
+        if key in input_dict:
+            return True
+        for _, v in input_dict.items():
+            if isinstance(v, dict):
+                if self.check_input_parameters_dict_recursive(v, key):
+                    return True
+        return False
 
     def parse_input(self):
         sec_run = self.archive.run[-1]
@@ -1584,16 +1635,22 @@ class GromacsParser(MDParser):
             sec_run.x_gromacs_parallel_task_nr = host_info[1]
             sec_run.x_gromacs_number_of_tasks = host_info[2]
 
-        # parse the input parameters using log file as default and mdp output or input as supplementary
+        # parse the input parameters using log file's hierarchical structure as default
         self.input_parameters = {
             key.replace('_', '-'): val.lower() if isinstance(val, str) else val
             for key, val in self.log_parser.get('input_parameters', {}).items()
         }
+        # read the mdp output or input to supplement the log inputs (i.e., only store if not found in log)
         self.mdp_parser.mainfile = self.get_mdp_file()
+        self.input_parameters[
+            'mdp_unique_params'
+        ] = {}  # parameters that are unique to the mdp file
         for key, param in self.mdp_parser.get('input_parameters', {}).items():
             new_key = key.replace('_', '-')
-            if new_key not in self.input_parameters:
-                self.input_parameters[new_key] = (
+            if not self.check_input_parameters_dict_recursive(
+                self.input_parameters, new_key
+            ):
+                self.input_parameters['mdp_unique_params'][new_key] = (
                     param.lower() if isinstance(param, str) else param
                 )
 
@@ -1632,4 +1689,4 @@ class GromacsParser(MDParser):
 
         self.parse_workflow()
 
-        self.traj_parser.clean()
+        # self.traj_parser.clean()

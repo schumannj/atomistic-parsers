@@ -1554,16 +1554,16 @@ class GromacsParser(MDParser):
             self.parse_md_workflow(dict(method=method, results=results))
 
             # TODO fix hdf5 datasets here and then implement testing
-        #         if flag_fe and self.archive.m_context:
-        #             sec_fe_parameters = (
-        #                 self.archive.workflow2.method.free_energy_calculation_parameters[0]
-        #             )
-        #             sec_fe = self.archive.workflow2.results.free_energy_calculations[0]
-        #             sec_fe.method_ref = sec_fe_parameters
-        #             sec_fe.value_total_energy_magnitude = columns[:, 0]
-        #             sec_fe.value_total_energy_derivative_magnitude = columns[:, 1]
-        #             sec_fe.value_total_energy_differences_magnitude = columns[:, 2:-1]
-        #             sec_fe.value_PV_energy_magnitude = columns[:, -1]
+            if flag_fe and self.archive.m_context:
+                sec_fe_parameters = (
+                    self.archive.workflow2.method.free_energy_calculation_parameters[0]
+                )
+                sec_fe = self.archive.workflow2.results.free_energy_calculations[0]
+                sec_fe.method_ref = sec_fe_parameters
+                sec_fe.value_total_energy_magnitude = columns[:, 0]
+                sec_fe.value_total_energy_derivative_magnitude = columns[:, 1]
+                sec_fe.value_total_energy_differences_magnitude = columns[:, 2:-1]
+                sec_fe.value_PV_energy_magnitude = columns[:, -1]
 
     def standardize_input_parameters_dict_recursive(self, input_dict: dict):
         """_summary_

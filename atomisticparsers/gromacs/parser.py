@@ -21,6 +21,7 @@ import numpy as np
 import logging
 import re
 import datetime
+from typing import List, Any
 
 import panedr
 
@@ -388,7 +389,7 @@ class GromacsMDAnalysisParser(MDAnalysisParser):
 
         return interactions
 
-    def get_force_field_parameters(self, gromacs_version: str = None):
+    def get_force_field_parameters(self, gromacs_version: str = None) -> List[Any]:
         # read force field parameters not saved by MDAnalysis
         # copied from MDAnalysis.topology.tpr.utils
         # TODO Revamp interactions section to only extract meaningful info
@@ -407,7 +408,7 @@ class GromacsMDAnalysisParser(MDAnalysisParser):
         with open(self.mainfile, 'rb') as f:
             data = tpr_utils.TPXUnpacker(f.read())
 
-        interactions = []
+        interactions: List[Any] = []
 
         # read header
         header = tpr_utils.read_tpxheader(data)

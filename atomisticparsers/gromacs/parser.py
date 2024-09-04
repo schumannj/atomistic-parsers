@@ -375,27 +375,34 @@ class GromacsMDAnalysisParser(MDAnalysisParser):
     def __init__(self):
         super().__init__(None)
 
-    def get_interactions(self):
+    def get_interactions(self, gromacs_version: str = None):
         interactions = super().get_interactions()
 
         # add force field parameters
-        try:
-            interactions.extend(self.get_force_field_parameters())
-        except Exception:
-            self.logger.error('Error parsing force field parameters.')
+        # try:
+        interactions.extend(self.get_force_field_parameters(gromacs_version))
+        # except Exception:
+        #     self.logger.error('Error parsing force field parameters.')
 
         self._results['interactions'] = interactions
 
         return interactions
 
-    def get_force_field_parameters(self):
+    def get_force_field_parameters(self, gromacs_version: str = None):
         # read force field parameters not saved by MDAnalysis
         # copied from MDAnalysis.topology.tpr.utils
-        # TODO maybe a better implementation exists
-        # ? Can we check only the primary digit? Perhaps this should be done elsewhere
         # TODO Revamp interactions section to only extract meaningful info
-        if MDAnalysis.__version__ != '2.0.0':
-            self.logger.warning('Incompatible version of MDAnalysis.')
+        if MDAnalysis.__version__.split('.')[0] != '2':
+            self.logger.warning(
+                'MDAnalysis >= 2.0.0 is required for reading force field from tpr. Interactions will not be stored'
+            )
+            return []
+        gromacs_version = gromacs_version.split('.')[0] if gromacs_version else None
+        if gromacs_version == '2024':
+            self.logger.warning(
+                'Reading force field from tpr not yet supported for Gromacs 2024. Interactions will not be stored'
+            )
+            return []
 
         with open(self.mainfile, 'rb') as f:
             data = tpr_utils.TPXUnpacker(f.read())
@@ -1125,7 +1132,8 @@ class GromacsParser(MDParser):
         if n_atoms == 0:
             self.logger.error('Error parsing interactions.')
 
-        interactions = self.traj_parser.get_interactions()
+        gromacs_version = self.archive.run[0].program.version
+        interactions = self.traj_parser.get_interactions(gromacs_version)
         self.parse_interactions(interactions, sec_model)
 
         input_parameters = self.input_parameters

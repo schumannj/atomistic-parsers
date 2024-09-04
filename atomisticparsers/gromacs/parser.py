@@ -76,6 +76,13 @@ def to_float(string):
 class GromacsLogParser(TextParser):
     def __init__(self):
         super().__init__(None)
+        self.re_section = re.compile(r'^\s*([\w\-]+):\s*$')
+        self.re_subsection = re.compile(r'^\s*([\w\-]+\s[\d]+):\s*$')
+        self.re_scalar = re.compile(r'\s*([\w\-]+)\s*[=:]\s*(.+)')
+        self.re_array = re.compile(r'\s*([\w\-]+)\[[\d ]+\]\s*=\s*\{*(.+)')
+        self.re_shorthand_array = re.compile(
+            r'\s*([\w\-]+)\[\d+,\.\.\.,\d+\]\s*=\s*\{(\d+),\.\.\.,(\d+)\}'
+        )
 
     def init_quantities(self):
         def str_to_header(val_in):
@@ -83,14 +90,6 @@ class GromacsLogParser(TextParser):
             return {v[0].strip(): v[1].strip() for v in val if len(v) == 2}
 
         def str_to_input_parameters(val_in):
-            re_section = re.compile(r'^\s*([\w\-]+):\s*$')
-            re_subsection = re.compile(r'^\s*([\w\-]+\s[\d]+):\s*$')
-            re_scalar = re.compile(r'\s*([\w\-]+)\s*[=:]\s*(.+)')
-            re_array = re.compile(r'\s*([\w\-]+)\[[\d ]+\]\s*=\s*\{*(.+)')
-            re_shorthand_array = re.compile(
-                r'\s*([\w\-]+)\[\d+,\.\.\.,\d+\]\s*=\s*\{(\d+),\.\.\.,(\d+)\}'
-            )
-
             parameters = dict()
             stack = [parameters]  # Stack to track the current context
             indent_levels = []  # To track the indentation levels
@@ -110,7 +109,7 @@ class GromacsLogParser(TextParser):
                     indent_levels.pop()
 
                 # Check for section
-                section_match = re_section.match(val_n)
+                section_match = self.re_section.match(val_n)
                 if section_match:
                     section_name = section_match.group(1)
                     stack[-1][section_name] = {}
@@ -119,7 +118,7 @@ class GromacsLogParser(TextParser):
                     continue
 
                 # Check for subsection
-                subsection_match = re_subsection.match(val_n)
+                subsection_match = self.re_subsection.match(val_n)
                 if subsection_match:
                     subsection_name = subsection_match.group(1)
                     stack[-1][subsection_name] = {}
@@ -128,22 +127,25 @@ class GromacsLogParser(TextParser):
                     continue
 
                 # Check for scalar
-                val_scalar = re_scalar.match(val_n)
+                val_scalar = self.re_scalar.match(val_n)
                 if val_scalar:
                     key = val_scalar.group(1)
                     value = val_scalar.group(2)
-                    if value.lower() == 'true':
-                        value = True
-                    elif value.lower() == 'false':
-                        value = False
-                    elif value.replace('.', '', 1).isdigit():
+                    if value.lower() in ['true', 'false']:
+                        value = value.lower() == 'true'
+                    # if value.lower() == 'true':
+                    #     value = True
+                    # elif value.lower() == 'false':
+                    #     value = False
+                    # elif value.replace('.', '', 1).isdigit():
+                    elif value % 1 == 0:
                         value = float(value) if '.' in value else int(value)
                     stack[-1][key] = value
 
                     continue
 
                 # Check for shorthand array
-                val_shorthand_array = re_shorthand_array.match(val_n)
+                val_shorthand_array = self.re_shorthand_array.match(val_n)
                 if val_shorthand_array:
                     array_key = val_shorthand_array.group(1)
                     start = int(val_shorthand_array.group(2))
@@ -152,7 +154,7 @@ class GromacsLogParser(TextParser):
                     continue
 
                 # Check for array
-                val_array = re_array.match(val_n)
+                val_array = self.re_array.match(val_n)
                 if val_array:
                     array_key = val_array.group(1)
                     value = [
@@ -257,19 +259,19 @@ class GromacsLogParser(TextParser):
 class GromacsMdpParser(TextParser):
     def __init__(self):
         super().__init__(None)
+        self.re_array = re.compile(r'\s*([\w\-]+)\[[\d ]+\]\s*=\s*\{*(.+)')
+        self.re_scalar = re.compile(r'\s*([\w\-]+)\s*[=:]\s*(.+)')
 
     def init_quantities(self):
         def str_to_input_parameters(val_in):
-            re_array = re.compile(r'\s*([\w\-]+)\[[\d ]+\]\s*=\s*\{*(.+)')
-            re_scalar = re.compile(r'\s*([\w\-]+)\s*[=:]\s*(.+)')
             parameters = dict()
             val = [line.strip() for line in val_in.splitlines()]
             for val_n in val:
-                val_scalar = re_scalar.match(val_n)
+                val_scalar = self.re_scalar.match(val_n)
                 if val_scalar:
                     parameters[val_scalar.group(1)] = val_scalar.group(2)
                     continue
-                val_array = re_array.match(val_n)
+                val_array = self.re_array.match(val_n)
                 if val_array:
                     parameters.setdefault(val_array.group(1), [])
                     value = [
@@ -380,10 +382,10 @@ class GromacsMDAnalysisParser(MDAnalysisParser):
         interactions = super().get_interactions()
 
         # add force field parameters
-        # try:
-        interactions.extend(self.get_force_field_parameters(gromacs_version))
-        # except Exception:
-        #     self.logger.error('Error parsing force field parameters.')
+        try:
+            interactions.extend(self.get_force_field_parameters(gromacs_version))
+        except Exception:
+            self.logger.error('Error parsing force field parameters.')
 
         self._results['interactions'] = interactions
 
@@ -1566,7 +1568,7 @@ class GromacsParser(MDParser):
                 sec_fe.value_total_energy_differences_magnitude = columns[:, 2:-1]
                 sec_fe.value_PV_energy_magnitude = columns[:, -1]
 
-    def standardize_input_parameters_dict_recursive(self, input_dict: dict):
+    def standardize_input_parameters(self, input_dict: dict):
         """_summary_
 
         Args:
@@ -1574,7 +1576,7 @@ class GromacsParser(MDParser):
         """
         for key, val in input_dict.items():
             if isinstance(val, dict):
-                self.standardize_input_parameters_dict_recursive(val)
+                self.standardize_input_parameters(val)
             elif isinstance(val, str):
                 input_dict[key.replace('_', '-')] = val.lower()
             elif isinstance(val, float):
@@ -1669,7 +1671,7 @@ class GromacsParser(MDParser):
         #     for key, val in self.log_parser.get('input_parameters', {}).items()
         # }
         self.input_parameters = self.log_parser.get('input_parameters', {})
-        self.standardize_input_parameters_dict_recursive(self.input_parameters)
+        self.standardize_input_parameters(self.input_parameters)
 
         # read the mdp output or input to supplement the log inputs (i.e., only store if not found in log)
         self.mdp_parser.mainfile = self.get_mdp_file()

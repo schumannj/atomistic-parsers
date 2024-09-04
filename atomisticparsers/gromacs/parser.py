@@ -1307,15 +1307,7 @@ class GromacsParser(MDParser):
                 'temperature': 'temperature',
             }
 
-            # getting lambdas from the mdp
-            # lambdas = {
-            #     key: self.input_parameters.get(f'{key}-lambdas', '')
-            #     for key in lambda_key_map.keys()
-            # }
-            # lambdas = {
-            #     key: [to_float(i) for i in val.split()] for key, val in lambdas.items()
-            # }
-            # getting lambdas from the log
+            # get lambdas from the log
             lambdas = self.input_parameters.get('all-lambdas', {})
             # ! unsure if the below placement of temperature-lambdas in the dict will always be exactly the same
             # TODO fix temperature-lambdas from being overwritten due to lack of indenting

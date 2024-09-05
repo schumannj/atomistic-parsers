@@ -44,7 +44,11 @@ class TrajParser(FileParser):
                 if 'calculator' in self._file_handler.backend.keys():
                     if self._file_handler.backend.calculator.name != 'emt':  # pylint: disable=E1101
                         self.logger.error('Trajectory is not ASAP.')
-                        self._file_handler = None
+                        if self._file_handler is 'VASP': #which other calculators are supported?
+                            #need to check if VASP output is available
+                            self.logger.warn('VASP is not ASAP.')
+                        else:
+                            self._file_handler = None
             except Exception:
                 self.logger.error('Error reading trajectory file.')
         return self._file_handler

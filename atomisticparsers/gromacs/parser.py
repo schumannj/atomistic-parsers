@@ -133,7 +133,7 @@ class GromacsLogParser(TextParser):
                     value = val_scalar.group(2)
                     if value.lower() in ['true', 'false']:
                         value = value.lower() == 'true'
-                    elif value % 1 == 0:
+                    elif value.replace('.', '', 1).isdigit():
                         value = float(value) if '.' in value else int(value)
                     stack[-1][key] = value
 
@@ -1661,6 +1661,10 @@ class GromacsParser(MDParser):
             sec_run.x_gromacs_number_of_tasks = host_info[2]
 
         # parse the input parameters using log file's hierarchical structure as default
+        # self.input_parameters = {
+        #     key.replace('_', '-'): val.lower() if isinstance(val, str) else val
+        #     for key, val in self.log_parser.get('input_parameters', {}).items()
+        # }
         self.input_parameters = self.log_parser.get('input_parameters', {})
         self.standardize_input_parameters(self.input_parameters)
 

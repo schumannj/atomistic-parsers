@@ -890,7 +890,6 @@ class H5MDParser(MDParser):
         self.parse_observable_info()
         self.parse_parameter_info()
 
-        print('in parsing')
         # Populate the archive
         self.parse_method()
 

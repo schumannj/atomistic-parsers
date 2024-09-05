@@ -21,7 +21,7 @@ import numpy as np
 import logging
 import re
 import datetime
-from typing import List, Any
+from typing import List, Dict
 
 import panedr
 
@@ -133,11 +133,6 @@ class GromacsLogParser(TextParser):
                     value = val_scalar.group(2)
                     if value.lower() in ['true', 'false']:
                         value = value.lower() == 'true'
-                    # if value.lower() == 'true':
-                    #     value = True
-                    # elif value.lower() == 'false':
-                    #     value = False
-                    # elif value.replace('.', '', 1).isdigit():
                     elif value % 1 == 0:
                         value = float(value) if '.' in value else int(value)
                     stack[-1][key] = value
@@ -391,7 +386,7 @@ class GromacsMDAnalysisParser(MDAnalysisParser):
 
         return interactions
 
-    def get_force_field_parameters(self, gromacs_version: str = None) -> List[Any]:
+    def get_force_field_parameters(self, gromacs_version: str = None) -> List[Dict]:
         # read force field parameters not saved by MDAnalysis
         # copied from MDAnalysis.topology.tpr.utils
         # TODO Revamp interactions section to only extract meaningful info
@@ -410,7 +405,7 @@ class GromacsMDAnalysisParser(MDAnalysisParser):
         with open(self.mainfile, 'rb') as f:
             data = tpr_utils.TPXUnpacker(f.read())
 
-        interactions: List[Any] = []
+        interactions: List[Dict] = []
 
         # read header
         header = tpr_utils.read_tpxheader(data)
@@ -1666,10 +1661,6 @@ class GromacsParser(MDParser):
             sec_run.x_gromacs_number_of_tasks = host_info[2]
 
         # parse the input parameters using log file's hierarchical structure as default
-        # self.input_parameters = {
-        #     key.replace('_', '-'): val.lower() if isinstance(val, str) else val
-        #     for key, val in self.log_parser.get('input_parameters', {}).items()
-        # }
         self.input_parameters = self.log_parser.get('input_parameters', {})
         self.standardize_input_parameters(self.input_parameters)
 
